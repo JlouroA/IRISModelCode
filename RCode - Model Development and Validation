@@ -27,6 +27,7 @@ pc.model.1 <-  PC.Cox(
   data = data)
 pc.model.1
 
+
 ## Prepare validation subcohort
 
 
