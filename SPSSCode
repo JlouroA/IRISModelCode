@@ -1,0 +1,62 @@
+Compute LastEpisode=0.
+sort cases ID(A) Episode_ID(D).
+IF(Lag(ID)~=ID) LastEpisode = 1.
+execute.
+
+SELECT IF(LastEpisode=1).
+execute.
+
+FILTER OFF.
+USE ALL.
+SAMPLE  .40.
+EXECUTE.
+
+compute MarkSelected=1.
+execute.
+
+SORT CASES ID(A) Episode_ID(A).
+SAVE OUTFILE= 'Y:\BBDD_IDs_Selected2.sav'
+/KEEP= ID MarkSelected
+/COMPRESSED. 
+
+
+GET
+  FILE='Y:\BBDD_riskmodels.sav'.
+
+
+MATCH FILES /FILE=*
+  /FILE='Y:\BBDD_IDs_Selected2.sav'
+  /BY ID.
+EXECUTE.
+
+
+IF(MISSING(MarkSelected)=1) MarkSelected=0.
+execute.
+
+sort cases ID(A) MarkSelected(D).
+
+IF(Lag(ID)=ID AND lag(MarkSelected)=1) MarkSelected=1.
+execute.
+
+
+SAVE OUTFILE='Y:\BBDD_riskmodels.sav'
+  /COMPRESSED.
+
+GET
+  FILE='Y:\BBDD_riskmodels.sav'.
+
+SELECT IF (MarkSelected=0).
+EXECUTE.
+SORT CASES ID(A) Episode_ID(A).
+SAVE OUTFILE= 'Y:\BBDD_Selected_forR.sav'
+/KEEP= ID	Episode_ID	Age	Time1	Time2	Timetotal	Family_History	BBD_History	Mammographic_Features	BreastCancer /COMPRESSED. 
+
+GET
+  FILE='Y:\BBDD_riskmodels.sav'.
+
+
+SELECT IF (MarkSelected=1).
+EXECUTE.
+SORT CASES ID(A) Episode_ID(A).
+SAVE OUTFILE= 'Y:\BBDD_NotSelected_forR.sav'
+/KEEP= ID	Episode_ID	Age	Time1	Time2	Timetotal	Family_History	BBD_History	Mammographic_Features	BreastCancer /COMPRESSED. 
