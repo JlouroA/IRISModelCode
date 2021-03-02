@@ -1,0 +1,512 @@
+## Model Development
+
+library(partlyconditional)
+library(survival)
+library(compareGroups)
+library(haven)
+library(cvAUC)
+library(pROC)
+library( tdROC )
+
+setwd("Y:/")
+data <- read_sav("BBDD_Selected_forR.sav")
+data<-as.data.frame(data)
+
+head(data)
+
+data$Family_History<-as.factor(data$Family_History)
+data$BBD_History<-as.factor(data$BBD_History)
+data$Mammographic_Features<-as.factor(data$Mammographic_Features)
+
+pc.model.1 <-  PC.Cox(
+  id = "ID",
+  stime = "Timetotal",
+  status = "BreastCancer",
+  measurement.time = "Time1",
+  predictors = c("Age", "Family_History", "BBD_History", "Mammographic_Features"),
+  data = data)
+pc.model.1
+
+## Prepare validation subcohort
+
+
+newdata <- read_sav("BBDD_NOTSelected_forR.sav")
+newdata<-as.data.frame(newdata)
+newdata$Family_History<-as.factor(newdata$Family_History)
+newdata$BBD_History<-as.factor(newdata$BBD_History)
+newdata$Mammographic_Features<-as.factor(newdata$Mammographic_Features)
+
+
+save.image("Y:/input.RData")
+
+
+## Predict the different time horizons in the validation subcohort
+
+rm(list=ls())
+
+load("input.RData")
+
+
+newdata1<-subset(newdata, Episode_ID==1)
+modelresult<-predict(pc.model.1, newdata = newdata1, prediction.time = c(2,4,6,8,10,12,14,16,18,20))
+
+save.image("output.RData")
+
+
+#Estimate the Expected Observed Overall (Table 3)
+
+
+setwd("Y:/")
+data <- read_sav("BBDD_Selected_forR.sav")
+data<-as.data.frame(data)
+
+head(data)
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=data)
+E2<-mean(subset(modelresult)$risk_2)
+O2<-1-summary(KM5,times=c(2))$surv
+E4<-mean(subset(modelresult)$risk_4)
+O4<-1-summary(KM5,times=c(4))$surv
+E6<-mean(subset(modelresult)$risk_6)
+O6<-1-summary(KM5,times=c(6))$surv
+E8<-mean(subset(modelresult)$risk_8)
+O8<-1-summary(KM5,times=c(8))$surv
+E10<-mean(subset(modelresult)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+E12<-mean(subset(modelresult)$risk_12)
+O12<-1-summary(KM5,times=c(12))$surv
+E14<-mean(subset(modelresult)$risk_14)
+O14<-1-summary(KM5,times=c(14))$surv
+E16<-mean(subset(modelresult)$risk_16)
+O16<-1-summary(KM5,times=c(16))$surv
+E18<-mean(subset(modelresult)$risk_18)
+O18<-1-summary(KM5,times=c(18))$surv
+E20<-mean(subset(modelresult)$risk_20)
+O20<-1-summary(KM5,times=c(20))$surv
+N2<-summary(KM5,times=c(2))$n.event
+N4<-summary(KM5,times=c(4))$n.event
+N6<-summary(KM5,times=c(6))$n.event
+N8<-summary(KM5,times=c(8))$n.event
+N10<-summary(KM5,times=c(10))$n.event
+N12<-summary(KM5,times=c(12))$n.event
+N14<-summary(KM5,times=c(14))$n.event
+N16<-summary(KM5,times=c(16))$n.event
+N18<-summary(KM5,times=c(18))$n.event
+N20<-summary(KM5,times=c(20))$n.event
+
+
+CIInf2<-(E2/O2)*(1+(1/(2*N2))*(1.96^2)*(1-sqrt(1+(4*N2)/(1.96^2))))
+CIInf4<-(E4/O4)*(1+(1/(2*N4))*(1.96^2)*(1-sqrt(1+(4*N4)/(1.96^2))))
+CIInf6<-(E6/O6)*(1+(1/(2*N6))*(1.96^2)*(1-sqrt(1+(4*N6)/(1.96^2))))
+CIInf8<-(E8/O8)*(1+(1/(2*N8))*(1.96^2)*(1-sqrt(1+(4*N8)/(1.96^2))))
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CIInf12<-(E12/O12)*(1+(1/(2*N12))*(1.96^2)*(1-sqrt(1+(4*N12)/(1.96^2))))
+CIInf14<-(E14/O14)*(1+(1/(2*N14))*(1.96^2)*(1-sqrt(1+(4*N14)/(1.96^2))))
+CIInf16<-(E16/O16)*(1+(1/(2*N16))*(1.96^2)*(1-sqrt(1+(4*N16)/(1.96^2))))
+CIInf18<-(E18/O18)*(1+(1/(2*N18))*(1.96^2)*(1-sqrt(1+(4*N18)/(1.96^2))))
+CIInf20<-(E20/O20)*(1+(1/(2*N20))*(1.96^2)*(1-sqrt(1+(4*N20)/(1.96^2))))
+CISup2<-(E2/O2)*(1+(1/(2*N2))*(1.96^2)*(1+sqrt(1+(4*N2)/(1.96^2))))
+CISup4<-(E4/O4)*(1+(1/(2*N4))*(1.96^2)*(1+sqrt(1+(4*N4)/(1.96^2))))
+CISup6<-(E6/O6)*(1+(1/(2*N6))*(1.96^2)*(1+sqrt(1+(4*N6)/(1.96^2))))
+CISup8<-(E8/O8)*(1+(1/(2*N8))*(1.96^2)*(1+sqrt(1+(4*N8)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+CISup12<-(E12/O12)*(1+(1/(2*N12))*(1.96^2)*(1+sqrt(1+(4*N12)/(1.96^2))))
+CISup14<-(E14/O14)*(1+(1/(2*N14))*(1.96^2)*(1+sqrt(1+(4*N14)/(1.96^2))))
+CISup16<-(E16/O16)*(1+(1/(2*N16))*(1.96^2)*(1+sqrt(1+(4*N16)/(1.96^2))))
+CISup18<-(E18/O18)*(1+(1/(2*N18))*(1.96^2)*(1+sqrt(1+(4*N18)/(1.96^2))))
+CISup20<-(E20/O20)*(1+(1/(2*N20))*(1.96^2)*(1+sqrt(1+(4*N20)/(1.96^2))))
+
+a<-data.frame(Year=seq(2,20,2),O=c(N2,N4,N6,N8,N10,N12,N14,N16,N18,N20),EO=round(c(E2/O2,E4/O4,E6/O6,E8/O8,E10/O10,E12/O12,E14/O14,E16/O16,E18/O18,E20/O20),3),
+              CIInf=round(c(CIInf2,	CIInf4,	CIInf6,	CIInf8,	CIInf10,	CIInf12,	CIInf14,	CIInf16,	CIInf18,	CIInf20),3), 
+              CISup=round(c(CISup2,	CISup4,	CISup6,	CISup8,	CISup10,	CISup12,	CISup14,	CISup16,	CISup18,	CISup20),3))
+
+a
+
+
+### Estimations of the different E/O of table 4
+
+## E/O ratio for family history
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data, Family_History == 0))
+
+E10<-mean(subset(modelresult,Family_History == 0)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+Fam0<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Fam0
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data, Family_History == 1))
+
+E10<-mean(subset(modelresult,Family_History == 1)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+Fam1<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Fam1
+
+
+# ForMammographic_Features
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,Mammographic_Features == 0))
+
+E10<-mean(subset(modelresult,Mammographic_Features == 0)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+Features0<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Features0
+
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,Mammographic_Features == 1))
+
+
+E10<-mean(subset(modelresult,Mammographic_Features == 1)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+Features1<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Features1
+
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,Mammographic_Features == 2))
+
+
+E10<-mean(subset(modelresult,Mammographic_Features == 2)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+
+Features2<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Features2
+
+
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,Mammographic_Features == 3))
+
+
+E10<-mean(subset(modelresult, Mammographic_Features == 3)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+
+Features3<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Features3
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,Mammographic_Features == 4))
+
+
+E10<-mean(subset(modelresult, Mammographic_Features == 4)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+
+Features4<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Features4
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,Mammographic_Features == 5))
+
+
+E10<-mean(subset(modelresult, Mammographic_Features == 5)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+Features5<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Features5
+
+
+
+## For BBD
+
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data, BBD_History == 0))
+
+
+E10<-mean(subset(modelresult, BBD_History == 0)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+BBD0<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+BBD0
+
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,  BBD_History == 1))
+
+
+E10<-mean(subset(modelresult,  BBD_History == 1)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+BBD1<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+BBD1
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,   BBD_History == 2))
+
+
+E10<-mean(subset(modelresult,   BBD_History == 2)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+BBD2<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+BBD2
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,   BBD_History == 3))
+
+
+E10<-mean(subset(modelresult,   BBD_History ==3)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10.4))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+
+BBD3<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+BBD3
+
+
+
+# AGe
+
+
+data$AgeGroup <- data$Age
+
+data$AgeGroup[data$AgeGroup<=54]<-1
+data$AgeGroup[data$AgeGroup>=55&data$AgeGroup<=59]<-2
+data$AgeGroup[data$AgeGroup>=60&data$AgeGroup<=64]<-3
+data$AgeGroup[data$AgeGroup>=65]<-4
+data$AgeGroup<-as.factor(data$AgeGroup)
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,   AgeGroup == 1))
+
+
+E10<-mean(subset(modelresult,   AgeGroup == 1)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+Age1<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Age1
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,   AgeGroup == 2))
+
+
+E10<-mean(subset(modelresult,   AgeGroup == 2)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+Age2<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Age2
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,   AgeGroup == 3))
+
+E10<-mean(subset(modelresult,   AgeGroup == 3)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+
+Age3<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Age3
+
+
+KM5 <- survfit(Surv(Time1,Time2,BreastCancer) ~  cluster(ID),  type="kaplan-meier", conf.type="log", data=subset(data,   AgeGroup == 4))
+
+
+E10<-mean(subset(modelresult,   AgeGroup == 4)$risk_10)
+O10<-1-summary(KM5,times=c(10))$surv
+N10<-summary(KM5,times=c(10))$n.event
+CIInf10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1-sqrt(1+(4*N10)/(1.96^2))))
+CISup10<-(E10/O10)*(1+(1/(2*N10))*(1.96^2)*(1+sqrt(1+(4*N10)/(1.96^2))))
+
+
+Age4<-data.frame(Year=10,N=N10,EO=round(c(E10/O10),3),
+                    CIInf=round(CIInf10,3), 
+                    CISup=round(CISup10,3))
+Age4
+
+
+### We estimate AUC for table 3
+
+
+
+head(modelresult)
+
+mod1.2<-modelresult
+mod1.2$Tumor2year = 0
+
+for (j in 1:dim(mod1.2)[1]){
+  if((mod1.2$BreastCancer[j]==1  & mod1.2$TimeTotal[j]<=2))  {mod1.2$Tumor2year[j] <- 1}
+}
+
+
+mod1.4<-subset(modelresult, (Age<68)&(TimeTotal>=3.999 | (BreastCancer==1  & TimeTotal<=4)))
+
+mod1.4$Tumor4year = 0
+
+for (j in 1:dim(mod1.4)[1]){
+  if((mod1.4$BreastCancer[j]==1  & mod1.4$TimeTotal[j]<=4))  {mod1.4$Tumor4year[j] <- 1}
+}
+
+mod1.6<-subset(modelresult, (Age<66)&(TimeTotal>=5.999 | (BreastCancer==1  & TimeTotal<=6)))
+
+
+mod1.6$Tumor6year = 0
+
+for (j in 1:dim(mod1.6)[1]){
+  if((mod1.6$BreastCancer[j]==1  & mod1.6$TimeTotal[j]<=6))  {mod1.6$Tumor6year[j] <- 1}
+}
+
+mod1.8<-subset(modelresult, (Age<64)&(TimeTotal>=7.999 | (BreastCancer==1  & TimeTotal<=8)))
+
+
+mod1.8$Tumor8year = 0
+
+for (j in 1:dim(mod1.8)[1]){
+  if((mod1.8$BreastCancer[j]==1  & mod1.8$TimeTotal[j]<=8))  {mod1.8$Tumor8year[j] <- 1}
+}
+
+
+mod1.10<-subset(modelresult, (Age<62)&(TimeTotal>=9.999 | (BreastCancer==1  & TimeTotal<=10)))
+
+
+mod1.10$Tumor10year = 0
+
+for (j in 1:dim(mod1.10)[1]){
+  if((mod1.10$BreastCancer[j]==1  & mod1.10$TimeTotal[j]<=10))  {mod1.10$Tumor10year[j] <- 1}
+}
+
+
+mod1.12<-subset(modelresult, (Age<60)&(TimeTotal>=11.999 | (BreastCancer==1  & TimeTotal<=12)))
+
+mod1.12$Tumor12year = 0
+
+for (j in 1:dim(mod1.12)[1]){
+  if((mod1.12$BreastCancer[j]==1  & mod1.12$TimeTotal[j]<=12))  {mod1.12$Tumor12year[j] <- 1}
+}
+
+mod1.14<-subset(modelresult, (Age<58)&(TimeTotal>=13.999 | (BreastCancer==1  & TimeTotal<=14)))
+
+mod1.14$Tumor14year = 0
+
+for (j in 1:dim(mod1.14)[1]){
+  if((mod1.14$BreastCancer[j]==1  & mod1.14$TimeTotal[j]<=14))  {mod1.14$Tumor14year[j] <- 1}
+}
+
+mod1.16<-subset(modelresult, (Age<56)&(TimeTotal>=15.999 | (BreastCancer==1  & TimeTotal<=16)))
+
+mod1.16$Tumor16year = 0
+
+for (j in 1:dim(mod1.16)[1]){
+  if((mod1.16$BreastCancer[j]==1  & mod1.16$TimeTotal[j]<=16))  {mod1.16$Tumor16year[j] <- 1}
+}
+
+mod1.18<-subset(modelresult, (Age<54)&(TimeTotal>=17.999 | (BreastCancer==1  & TimeTotal<=18)))
+
+mod1.18$Tumor18year = 0
+
+for (j in 1:dim(mod1.18)[1]){
+  if((mod1.18$BreastCancer[j]==1  & mod1.18$TimeTotal[j]<=18))  {mod1.18$Tumor18year[j] <- 1}
+}
+
+mod1.20<-subset(modelresult, (Age<52) &(TimeTotal>=19.999 | (BreastCancer==1  & TimeTotal<=20)))
+
+mod1.20$Tumor20year = 0
+
+for (j in 1:dim(mod1.20)[1]){
+  if((mod1.20$BreastCancer[j]==1  & mod1.20$TimeTotal[j]<=20))  {mod1.20$Tumor20year[j] <- 1}
+}
+
+
+auc2  <- ci.cvAUC(mod1.2$risk_2, mod1.2$Tumor2year)
+auc4  <- ci.cvAUC(mod1.4$risk_4, mod1.4$Tumor4year)
+auc6  <- ci.cvAUC(mod1.6$risk_6, mod1.6$Tumor6year)
+auc8  <- ci.cvAUC(mod1.8$risk_8, mod1.8$Tumor8year)
+auc10  <- ci.cvAUC(mod1.10$risk_10, mod1.10$Tumor10year)
+auc14  <- ci.cvAUC(mod1.14$risk_14, mod1.14$Tumor14year)
+auc16  <- ci.cvAUC(mod1.16$risk_16, mod1.16$Tumor16year)
+auc18  <- ci.cvAUC(mod1.18$risk_18, mod1.18$Tumor18year)
+auc12  <- ci.cvAUC(mod1.12$risk_12, mod1.12$Tumor12year)
+auc20  <- ci.cvAUC(mod1.20$risk_20, mod1.20$Tumor20year)
+
+
+auc<-data.frame(AUC=c(auc2$cvAUC,auc4$cvAUC,auc6$cvAUC,auc8$cvAUC,auc10$cvAUC,auc12$cvAUC,auc14$cvAUC,auc16$cvAUC,auc18$cvAUC,auc20$cvAUC),
+                cil=c(auc2$ci[1],auc4$ci[1],auc6$ci[1],auc8$ci[1],auc10$ci[1],auc12$ci[1]
+       ,auc14$ci[1],auc16$ci[1],auc18$ci[1],auc20$ci[1]),cis=c(auc2$ci[2],auc4$ci[2],auc6$ci[2],auc8$ci[2],auc10$ci[2],auc12$ci[2]
+                                                              ,auc14$ci[2],auc16$ci[2],auc18$ci[2],auc20$ci[2]))
