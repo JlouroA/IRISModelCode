@@ -494,20 +494,3 @@ for (j in 1:dim(mod1.20)[1]){
   if((mod1.20$BreastCancer[j]==1  & mod1.20$TimeTotal[j]<=20))  {mod1.20$Tumor20year[j] <- 1}
 }
 
-
-auc2  <- ci.cvAUC(mod1.2$risk_2, mod1.2$Tumor2year)
-auc4  <- ci.cvAUC(mod1.4$risk_4, mod1.4$Tumor4year)
-auc6  <- ci.cvAUC(mod1.6$risk_6, mod1.6$Tumor6year)
-auc8  <- ci.cvAUC(mod1.8$risk_8, mod1.8$Tumor8year)
-auc10  <- ci.cvAUC(mod1.10$risk_10, mod1.10$Tumor10year)
-auc14  <- ci.cvAUC(mod1.14$risk_14, mod1.14$Tumor14year)
-auc16  <- ci.cvAUC(mod1.16$risk_16, mod1.16$Tumor16year)
-auc18  <- ci.cvAUC(mod1.18$risk_18, mod1.18$Tumor18year)
-auc12  <- ci.cvAUC(mod1.12$risk_12, mod1.12$Tumor12year)
-auc20  <- ci.cvAUC(mod1.20$risk_20, mod1.20$Tumor20year)
-
-
-auc<-data.frame(AUC=c(auc2$cvAUC,auc4$cvAUC,auc6$cvAUC,auc8$cvAUC,auc10$cvAUC,auc12$cvAUC,auc14$cvAUC,auc16$cvAUC,auc18$cvAUC,auc20$cvAUC),
-                cil=c(auc2$ci[1],auc4$ci[1],auc6$ci[1],auc8$ci[1],auc10$ci[1],auc12$ci[1]
-       ,auc14$ci[1],auc16$ci[1],auc18$ci[1],auc20$ci[1]),cis=c(auc2$ci[2],auc4$ci[2],auc6$ci[2],auc8$ci[2],auc10$ci[2],auc12$ci[2]
-                                                              ,auc14$ci[2],auc16$ci[2],auc18$ci[2],auc20$ci[2]))
